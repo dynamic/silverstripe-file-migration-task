@@ -1,0 +1,45 @@
+{
+    "name": "dynamic/silverstripe-file-migration-task",
+    "type": "silverstripe-vendormodule",
+    "description": "Sync files with the File table",
+    "keywords": [
+        "silverstripe",
+        "File",
+        "BuildTask",
+        "Migration"
+    ],
+    "license": "BSD-3-Clause",
+    "authors": [
+        {
+            "name": "Dynamic",
+            "email": "dev@dynamicagency.com",
+            "homepage": "http://www.dynamicagency.com"
+        }
+    ],
+    "require": {
+        "silverstripe/assets": "^1.0@dev"
+    },
+    "require-dev": {
+        "phpunit/PHPUnit": "^5.7",
+        "squizlabs/php_codesniffer": "*"
+    },
+    "config": {
+        "process-timeout": 600
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Dynamic\\FileMigration\\": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "scripts": {
+        "lint": "vendor/bin/phpcs src/ tests/",
+        "lint-clean": "vendor/bin/phpcbf src/ tests/"
+    }
+}

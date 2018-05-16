@@ -1,0 +1,6 @@
+---
+Name: dynamic-file-migration-config
+---
+SilverStripe\Assets\File:
+  extensions:
+    - Dynamic\FileMigration\Extensions\FileDataExtension
