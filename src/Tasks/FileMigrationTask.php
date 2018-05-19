@@ -65,15 +65,20 @@ class FileMigrationTask extends BuildTask
         $migrateDirectoryStructure = $this->config()->get('migrate_directory_structure');
         $publish = $this->config()->get('publish_on_migration');
 
-        foreach ($this->traverseDirectory() as $file) {
-            $folder = null;
-            if ($migrateDirectoryStructure) {
-                $folder = $this->processDirectory($file);
-            }
+        $existing = File::get()->filter('LegacyPath:not', null)->column('LegacyPath');
+        $existing = array_combine($existing, $existing);
 
-            $destinationName = ($migrateDirectoryStructure) ? $this->getOriginalFilename($file) : null;
-            if ($this->migrateFile($file, $publish, $folder, $destinationName)) {
-                $count++;
+        foreach ($this->traverseDirectory() as $file) {
+            if (!isset($existing[$file])) {
+                $folder = null;
+                if ($migrateDirectoryStructure) {
+                    $folder = $this->processDirectory($file);
+                }
+
+                $destinationName = ($migrateDirectoryStructure) ? $this->getOriginalFilename($file) : null;
+                if ($this->migrateFile($file, $publish, $folder, $destinationName)) {
+                    $count++;
+                }
             }
         }
         $time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"];
@@ -90,18 +95,29 @@ class FileMigrationTask extends BuildTask
 
         $objects = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory), \RecursiveIteratorIterator::SELF_FIRST);
         $allowedExtensions = File::singleton()->config()->get('allowed_extensions');
+        unset($allowedExtensions[0]);
 
         foreach ($objects as $name => $object) {
             if (is_file($name)) {
-                $validFile = false;
-                foreach ($this->yieldExtensions($allowedExtensions) as $extension) {
-                    if ($validFile == false && preg_match("/\.{$extension}/", $name)) {
-                        $validFile = true;
-                        yield $name;
-                    }
+                if ($this->isValidFile($name, $allowedExtensions)) {
+                    yield $name;
                 }
             }
         }
+    }
+
+    /**
+     * @param $fileName
+     * @param $allowedExtensions
+     */
+    protected function isValidFile($fileName, $allowedExtensions)
+    {
+        foreach ($this->yieldExtensions($allowedExtensions) as $extension) {
+            if (preg_match("/\.{$extension}/", $fileName) == 1) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
