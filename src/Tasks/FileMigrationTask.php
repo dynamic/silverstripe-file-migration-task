@@ -3,9 +3,12 @@
 namespace Dynamic\FileMigration\Tasks;
 
 use SilverStripe\Assets\File;
+use SilverStripe\Assets\Image;
 use SilverStripe\Assets\Folder;
-use SilverStripe\Control\Director;
 use SilverStripe\Dev\BuildTask;
+use SilverStripe\Control\Director;
+use SilverStripe\Core\Injector\Injector;
+use SilverStripe\AssetAdmin\Controller\AssetAdmin;
 
 /**
  * Class FileSyncTask
@@ -182,14 +185,22 @@ class FileMigrationTask extends BuildTask
     protected function migrateFile($localPath, $publish, $destination = null, $originalFilename = null)
     {
         if (!$existing = File::get()->filter('LegacyPath', $localPath)->first()) {
-            $newFile = File::create();
+            $extension = File::get_file_extension($localPath);
+            $newClass = File::get_class_for_file_extension($extension);
+            $newFile = Injector::inst()->create($newClass);
             $destinationName = ($destination !== null && $originalFilename !== null) ? $destination->Filename . $originalFilename : null;
             $newFile->setFromLocalFile($localPath, $destinationName);
             $newFile->LegacyPath = $localPath;
             $newFile->write();
 
+            // If file is an image, generate thumbnails
+            if (is_a($newFile, Image::class)) {
+                $admin = AssetAdmin::create();
+                $admin->generateThumbnails($newFile, true);
+            }
+
             if ($publish) {
-                $newFile->publishFile();
+                $newFile->publishRecursive();
             }
 
             static::write_it("{$newFile->ID} - File {$newFile->Name} created.", false);
