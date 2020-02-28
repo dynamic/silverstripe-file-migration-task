@@ -140,15 +140,18 @@ class FileMigrationTask extends BuildTask
      */
     protected function processDirectory($path)
     {
-        $parts = explode('/', $path);
-        $start = count($parts) - 4;
+        $existing_path = self::config()->get("existing_file_system_path");
+        $parts = explode('/', str_replace(dirname($existing_path), "", $path));
+        $start = 0;
 
         while ($start < count($parts) - 1) {
             $reImplode[] = $parts[$start];
             $start++;
         }
 
-        $checkDirectory = $this->config()->get('base_upload_folder') . '/' . implode('/', $reImplode);
+        $checkDirectory = $this
+            ->config()
+            ->get('base_upload_folder') . '/' . implode('/', $reImplode);
 
         if (!isset($this->directory_map[$checkDirectory])) {
             if ($folder = Folder::find_or_make($this->config()->get('base_upload_folder') . '/' . implode('/', $reImplode))) {
